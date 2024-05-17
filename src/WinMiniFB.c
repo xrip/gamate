@@ -17,7 +17,7 @@ static int s_scale = 1;
 static HDC s_hdc;
 static void* s_buffer;
 static BITMAPINFO* s_bitmapInfo;
-static char key_status[512] = {};
+char key_status[512] = { 0x00 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

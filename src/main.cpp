@@ -159,7 +159,7 @@ DWORD WINAPI SoundThread(LPVOID lpParam) {
 
     for (size_t i = 0; i < 4; i++) {
         int16_t audio_buffers[4][AUDIO_BUFFER_LENGTH * 2];
-        waveHeaders[i] = (WAVEHDR) {
+        waveHeaders[i] = {
                 .lpData = (char *) audio_buffers[i],
                 .dwBufferLength = AUDIO_BUFFER_LENGTH * 2,
         };
