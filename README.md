@@ -1,5 +1,7 @@
 # Gamate handheld console emulator for Windows
 
+![Gamate](https://github.com/xrip/gamate/assets/420432/3c5d0022-5e91-4ee0-99a9-f0175554b09c)
+
 [Gamate handheld console](https://en.wikipedia.org/wiki/Gamate) by Bit copr. Emulator for Windows
 
 
