@@ -9,6 +9,7 @@ gamate.exe rom.bin [scale_factor=4]
 ```
 
 Input:
+
 ARROWS
 
 SPACE - SELECT
