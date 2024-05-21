@@ -10,16 +10,19 @@
 
 #include "MiniFB.h"
 
+extern "C" {
 #include "m6502/m6502.h"
+}
 #include "emu2149/emu2149.h"
 #include "gamate/vdp.h"
 #include "gamate/bios.h"
 
 static PSG psg;
-static M6502 cpu;
+static m6502 cpu;
 
-static uint8_t RAM[1024] = { 0xFF };
 static uint8_t ROM[512 << 10];
+
+static uint8_t RAM[10239] = { 0xFF };
 
 static uint16_t SCREEN[150][160];
 
@@ -43,34 +46,199 @@ static inline void readfile(const char *pathname, uint8_t *dst) {
 }
 
 
+static inline uint8_t read_register(uint8_t address) {
+//    printf("REGISTER READ %02x : %02x\r\n", address, RAM[address]);
 
-extern "C" uint8_t Rd6502(uint16_t address) {
-    if (address <= 0x1FFF) {
-        return RAM[address & 1023];
+    switch (address) {
+        // IO
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x04:
+        case 0x05:
+        case 0x06:
+        case 0x07:
+        case 0x08:
+        case 0x09:
+        case 0x0A:
+        case 0x0B:
+        case 0x0C:
+        case 0x0D:
+        case 0x0E:
+        case 0x0F:
+            break;
+
+        // AUDIO - square waves
+        case 0x10:
+        case 0x11:
+        case 0x12:
+        case 0x13:
+            break;
+
+        // AUDIO - pwm
+        case 0x14:
+        case 0x15:
+        case 0x16:
+        case 0x17:
+        /// 0x18..0x1f    (ff)  Never used. Reads as 0ffh regardless of value written.
+        // TIMER
+        case 0x20:
+        case 0x21:
+        case 0x23:
+        case 0x24:
+        case 0x25:
+        case 0x26:
+        case 0x27:
+            break;
+
+        // DMA
+        case 0x28:
+        case 0x29:
+        case 0x2a:
+        case 0x2b:
+        case 0x2c:
+        case 0x2d:
+        case 0x2e:
+        case 0x2f:
+        case 0x30:
+        case 0x31:
+            break;
+        case 0x32:
+        case 0x33:
+        case 0x34:
+        case 0x35:
+            //printf("Bank select %x\r\n", address);
+            break;
+
+        case 0x36:
+        case 0x37:
+        case 0x38:
+        case 0x39:
+        case 0x3A:
+        case 0x3B:
+            break;
+
+        // Interrupts
+        case 0x3C:
+        case 0x3D:
+        case 0x3E:
+        case 0x3F:
+            break;
+
+        // LCD
+        case 0x40:
+        case 0x41:
+        case 0x42:
+        case 0x43:
+        case 0x44:
+        case 0x45:
+        case 0x46:
+        case 0x48:
+        case 0x49:
+        case 0x4a:
+        case 0x4b:
+            break;
+        case 0x4c:
+            printf("protection?????????? \r\n");
+            return 6;
+            break;
+        case 0x4d:
+        case 0x4e:
+            break;
+
+        // OTHER
+        case 0x4f:
+        case 0x50:
+        case 0x51:
+        case 0x52:
+        case 0x53:
+
+        case 0x54:
+            // ..
+        case 0x5F:
+            break;
+            break;
+        default:
+            break;
     }
 
-    if (address >= 0x6000 && address <= 0x9FFF) {
-        if (protection < 8) {
-            return ((0x47 >> (7 - protection++)) & 1) << 1;
+    return RAM[address];
+}
+
+
+static inline void write_register(uint8_t address, uint8_t  value) {
+
+    switch (address) {
+        // TIMER
+        case 0x20:
+        case 0x21:
+        case 0x23:
+        case 0x24:
+        case 0x25:
+        case 0x26:
+        case 0x27:
+            break;
+        case 0x32:
+        case 0x33:
+        case 0x34:
+        case 0x35:
+            // LCD
+        case 0x40:
+        case 0x41:
+        case 0x42:
+        case 0x43:
+        case 0x44:
+        case 0x45:
+        case 0x46:
+        case 0x48:
+        case 0x49:
+        case 0x4a:
+        case 0x4b:
+        case 0x4c:
+        case 0x4d:
+        case 0x4e:
+            printf("REGISTER WRITE %02x : %02x 0x%04x \r\n", address, value, cpu.pc);
+            break;
+        default:
+            break;
+    }
+
+    RAM[address] = value;
+}
+
+uint8_t Rd6502(void *, uint16_t address) {
+    //printf("rd %04x\n", address);
+    if (address <= 0x007F) {
+        return read_register(address);
+    }
+
+    if (address <= 0x27FF) {
+        return RAM[address];
+    }
+
+    if (address >= 0x4000 && address <= 0x7FFF) {
+        if (address >= 0x7FE2) {
+//            printf("IRQ 0x%04x\r\n", address);
         }
 
-        return ROM[bank0_offset + (address - 0x6000)];
+        int chip = RAM[0x33] & 1;
+        int bank = RAM[0x32] ^ 1;
+        address = (address - 0x4000) + bank * 0x4000;
+//        printf("bank0 a %04x rom %d  bank %d PC %04x\n", address, chip, RAM[0x32] ^ 1, cpu.PC);
+        return chip ? ROM[address] : BIOS[address];
     }
 
-    if (address >= 0xA000 && address <= 0xDFFF) {
-        return ROM[bank1_offset + (address - 0xA000)];
+    if (address >= 0x8000) {
+        address = (address - 0x8000) +  ((RAM[0x34] & 0x7f) * 0x8000);
+        return (RAM[0x34] & 0x80) ? ROM[address] : BIOS[address];
+//        return ROM[address - 0x8000];
     }
 
-    if (address >= 0x5000 && address <= 0x53FF) {
-//        if ((address & 7) == 6)
-        return vdp_read();
-//        exit(1);
-    }
+    // Open bus
+    return 0x00;
 
-    if (address >= 0x5A00 && address <= 0x5AFF) {
-        return 0x5B;
-    }
-
+/*
     // INPUT
     if (address == 0x4400) {
         uint8_t buttons = 0xff;
@@ -86,54 +254,19 @@ extern "C" uint8_t Rd6502(uint16_t address) {
 
         return buttons;
     }
-
-    if (address == 0x4800) {
-        return 0;
-
-    }
-
-// BIOS
-    if (address >= 0xE000) {
-        return BIOS[address & 4095];
-    }
-
-//    printf("READ >>>>>>>>> WTF %04x %04x\r\n", address, m6502_registers.PC);
-    return 0xFF;
+*/
 }
 
-extern "C" void Wr6502(uint16_t address, uint8_t value) {
-    if (address <= 0x1FFF) {
-        RAM[address & 1023] = value;
+void Wr6502(void *, uint16_t address, uint8_t value) {
+    if (address <= 0x007F) {
+        write_register(address, value);
+        return;
+    }
+    if (address <= 0x27FF) {
+        RAM[address] = value;
         return;
     }
 
-    if (address >= 0x4000 && address <= 0x43FF) {
-        PSG_writeReg(&psg, address & 0xf, value);
-        return;
-    }
-
-    if (address >= 0x5000 && address <= 0x53FF) {
-        return vdp_write(address, value);
-    }
-
-    if (address >= 0x5900 && address <= 0x59FF) {
-        return;
-    }
-
-// 4in1 mapper switch first 16kb
-    if (address == 0x8000) {
-        bank0_offset = 0x4000 * value;
-        return;
-    }
-
-// regular mapper switch second 16kb
-    if (address == 0xC000) {
-        bank1_offset = 0x4000 * value;
-        return;
-    }
-
-//printf("WRITE >>>>>>>>> WTF %04x\r\n", address);
-//    exit(1);
 }
 
 #define AUDIO_FREQ 44100
@@ -193,10 +326,6 @@ DWORD WINAPI SoundThread(LPVOID lpParam) {
     return 0;
 }
 
-extern "C" byte Loop6502(M6502 *R) {
-    return INT_QUIT;
-}
-
 int main(int argc, char **argv) {
     int scale = 4;
 
@@ -214,33 +343,54 @@ int main(int argc, char **argv) {
 
     CreateThread(NULL, 0, SoundThread, NULL, 0, NULL);
 
+
+
     readfile(argv[1], ROM);
 
-    PSG_init(&psg, 4'433'000 / 4, AUDIO_FREQ);
-    PSG_setVolumeMode(&psg, 2); // AY style
-    PSG_set_quality(&psg, true);
-    PSG_reset(&psg);
 
-    psg.stereo_mask[0] = 0x01;
-    psg.stereo_mask[1] = 0x03;
-    psg.stereo_mask[2] = 0x02;
 
-    memset(RAM, 0xFF, sizeof(RAM));
-    Reset6502(&cpu);
-    cpu.IPeriod = 32768;
+    m6502_init(&cpu);
 
+    //cpu.pc= 0xFFFE;
+    cpu.read_byte = &Rd6502;
+    cpu.write_byte = &Wr6502;
+    cpu.m65c02_mode = 1;
+    cpu.enable_bcd = 1;
+    m6502_gen_res(&cpu);
+    printf("PC 0x%04x\n", cpu.pc);
+
+    memset(RAM, 0x00, sizeof(RAM));
+    RAM[0x32] = RAM[0x33] = 0;
+//    ROM[0x7ffe] = 0xCF;
+
+//    for (int steps = 256; steps--;) {
     for (;;) {
-        Run6502(&cpu); Int6502(&cpu, INT_IRQ); // There's a timer that fires
-        cpu.IPeriod = 32768;                   // an IRQ every
-        Run6502(&cpu); Int6502(&cpu, INT_IRQ); // 32768 clocks (approx. 135.28Hz).
+        for (int steps = 256; steps--;) {
+            m6502_step(&cpu);
+//            m6502_debug_output(&cpu);
+        }
+        cpu.idf = 1;
+        m6502_gen_irq(&cpu, 0x7FE2);
+        for (int steps = 256*16; steps--;) {
+            m6502_step(&cpu);
+//            m6502_debug_output(&cpu);
+        }
 
-        cpu.IPeriod = 7364;
-        Run6502(&cpu);
-        cpu.IPeriod = 32768 - 7364;
+        cpu.idf = 1;
+        m6502_gen_irq(&cpu, 0x7FF4);
+        for (int steps = 256*16; steps--;) {
+            m6502_step(&cpu);
+//            m6502_debug_output(&cpu);
+        }
+        cpu.idf = 1;
+        m6502_gen_irq(&cpu, 0x7FEC);
+        m6502_debug_output(&cpu);
 
+        /*
         screen_update((uint16_t *) SCREEN);
 
         if (mfb_update(SCREEN, 60) == -1)
             exit(1);
+        */
     }
 }
