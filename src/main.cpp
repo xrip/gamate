@@ -21,7 +21,7 @@ static M6502 cpu;
 static uint8_t RAM[1024] = { 0xFF };
 static uint8_t ROM[512 << 10];
 
-static uint16_t SCREEN[150][160];
+static uint16_t SCREEN[GAMATE_SCREEN_HEIGHT][GAMATE_SCREEN_WIDTH];
 
 static uint8_t *key_status = (uint8_t *) mfb_keystatus();
 
@@ -108,8 +108,7 @@ extern "C" void Wr6502(uint16_t address, uint8_t value) {
     }
 
     if (address >= 0x4000 && address <= 0x43FF) {
-        PSG_writeReg(&psg, address & 0xf, value);
-        return;
+        return PSG_writeReg(&psg, address & 0xf, value);
     }
 
     if (address >= 0x5000 && address <= 0x53FF) {
@@ -209,7 +208,7 @@ int main(int argc, char **argv) {
         scale = atoi(argv[2]);
     }
 
-    if (!mfb_open("Bit corp. Gamate", 160, 150, scale))
+    if (!mfb_open("Bit corp. Gamate", GAMATE_SCREEN_WIDTH, GAMATE_SCREEN_HEIGHT, scale))
         return 0;
 
     CreateThread(NULL, 0, SoundThread, NULL, 0, NULL);
