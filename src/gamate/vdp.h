@@ -2,6 +2,9 @@
 #define GAMATE_VDP_H
 #include <cstdint>
 
+#define GAMATE_SCREEN_WIDTH 160
+#define GAMATE_SCREEN_HEIGHT 150
+
 #define RGB565(r, g, b) ((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3))
 // this palette is taken from megaduck, from videos it looks similar
 static const unsigned short palette_gamate[] = {

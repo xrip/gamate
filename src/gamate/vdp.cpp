@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <cstring>
 #include "vdp.h"
+
 int m_vramaddress;
 int m_bitplaneselect;
 int m_scrollx;
@@ -229,15 +230,15 @@ void screen_update(uint16_t *screen) {
     int real_x, real_y;
 
     if (m_displayblank) {
-        memset(screen, 0x00, (160*150)*2);
+        memset(screen, 0x00, (GAMATE_SCREEN_WIDTH*GAMATE_SCREEN_HEIGHT) * sizeof(uint16_t));
         return;
     }
 
-    for (int scanline = 0; scanline < 150; scanline++) {
+    for (int scanline = 0; scanline < GAMATE_SCREEN_HEIGHT; scanline++) {
         get_real_x_and_y(real_x, real_y, scanline);
 
-        for (int x = 0; x < 160; x++) {
-            screen[scanline * 160 + x] = palette_gamate[ get_pixel_from_vram(x + real_x, real_y)];
+        for (int x = 0; x < GAMATE_SCREEN_WIDTH; x++) {
+            screen[scanline * GAMATE_SCREEN_WIDTH + x] = palette_gamate[ get_pixel_from_vram(x + real_x, real_y)];
         }
     }
 }
