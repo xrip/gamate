@@ -7,7 +7,7 @@
 
 running:
 ```
-gamate.exe rom.bin [scale_factor=4]
+gamate.exe rom.bin [scale_factor=4] [lcd_ghosting_level=0]
 ```
 
 Input:
