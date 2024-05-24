@@ -198,14 +198,20 @@ extern "C" byte Loop6502(M6502 *R) {
 
 int main(int argc, char **argv) {
     int scale = 4;
+    int ghosting_level = 0;
 
     if (!argv[1]) {
-        printf("Usage: gamate.exe <rom.bin> [scale_factor]\n");
+        printf("Usage: gamate.exe <rom.bin> [scale_factor] [ghosting_level]\n");
         exit(-1);
     }
 
-    if (argv[2]) {
+    if (argc > 2) {
         scale = atoi(argv[2]);
+    }
+
+
+    if (argc > 3) {
+        ghosting_level = atoi(argv[3]);
     }
 
     if (!mfb_open("Bit corp. Gamate", GAMATE_SCREEN_WIDTH, GAMATE_SCREEN_HEIGHT, scale))
@@ -237,7 +243,7 @@ int main(int argc, char **argv) {
         Run6502(&cpu);
         cpu.IPeriod = 32768 - 7364;
 
-        screen_update((uint16_t *) SCREEN);
+        screen_update((uint16_t *) SCREEN, ghosting_level);
 
         if (mfb_update(SCREEN, 60) == -1)
             exit(1);

@@ -14,7 +14,7 @@ static const unsigned short palette_gamate[] = {
         RGB565(0x12, 0x42, 0x4C),
 };
 
-void screen_update(uint16_t * screen);
+void screen_update(uint16_t * screen, int ghosting_level);
 uint8_t vdp_read();
 void vdp_write(uint16_t address, uint8_t value);
 #endif //GAMATE_VDP_H

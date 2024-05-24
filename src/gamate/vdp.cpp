@@ -228,7 +228,7 @@ static inline int get_pixel_from_vram(int x, int y) {
 
 
 uint8_t ghosting_buffer[160 * 160] = { 0 };
-void screen_update(uint16_t *screen) {
+void screen_update(uint16_t *screen, int ghosting_level) {
     int real_x, real_y;
 
     if (m_displayblank) {
@@ -241,8 +241,8 @@ void screen_update(uint16_t *screen) {
 
         for (int x = 0; x < GAMATE_SCREEN_WIDTH; x++) {
             int color = get_pixel_from_vram(x + real_x, real_y) << 4;
-            if (0) {
-                int prev_color = ghosting_buffer[scanline * GAMATE_SCREEN_WIDTH + x] - 2;
+            if (ghosting_level) {
+                int prev_color = ghosting_buffer[scanline * GAMATE_SCREEN_WIDTH + x] - (7 - ghosting_level);
 
                 if (color < prev_color) color = prev_color;
                 ghosting_buffer[scanline * GAMATE_SCREEN_WIDTH + x] = color;
