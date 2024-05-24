@@ -226,6 +226,8 @@ static inline int get_pixel_from_vram(int x, int y) {
         return plane1 | (plane0 << 1); // does any game use this?
 }
 
+
+uint8_t ghosting_buffer[160 * 160] = { 0 };
 void screen_update(uint16_t *screen) {
     int real_x, real_y;
 
@@ -238,7 +240,15 @@ void screen_update(uint16_t *screen) {
         get_real_x_and_y(real_x, real_y, scanline);
 
         for (int x = 0; x < GAMATE_SCREEN_WIDTH; x++) {
-            screen[scanline * GAMATE_SCREEN_WIDTH + x] = palette_gamate[ get_pixel_from_vram(x + real_x, real_y)];
+            int color = get_pixel_from_vram(x + real_x, real_y) << 4;
+            if (0) {
+                int prev_color = ghosting_buffer[scanline * GAMATE_SCREEN_WIDTH + x] - 2;
+
+                if (color < prev_color) color = prev_color;
+                ghosting_buffer[scanline * GAMATE_SCREEN_WIDTH + x] = color;
+            }
+
+            screen[scanline * GAMATE_SCREEN_WIDTH + x] = palette_gamate[ color >> 4 ];
         }
     }
 }
