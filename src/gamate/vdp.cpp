@@ -227,8 +227,9 @@ static inline int get_pixel_from_vram(int x, int y) {
 }
 
 
-uint8_t ghosting_buffer[160 * 160] = { 0 };
+
 void screen_update(uint16_t *screen, int ghosting_level) {
+    static uint8_t ghosting_buffer[160 * 160] = { 0 };
     int real_x, real_y;
 
     if (m_displayblank) {
