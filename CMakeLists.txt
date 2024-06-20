@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(gamate C CXX ASM)
+project(gameking C CXX ASM)
 SET(BUILD_NAME "${PROJECT_NAME}")
 
 set(CMAKE_C_STANDARD 11)
